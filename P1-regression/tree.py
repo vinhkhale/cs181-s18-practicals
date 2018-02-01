@@ -3,11 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
-
+#from rdkit import Chem
 
 print("xd")
 df_train = pd.read_csv("train.csv")
 df_test = pd.read_csv("test.csv")
+
+print("ok")
 
 
 #store gap values
@@ -17,12 +19,15 @@ test_idx = df_train.shape[0]
 #delete 'Id' column
 df_test = df_test.drop(['Id'], axis=1)
 #delete 'gap' column
-df_train = df_train.drop(['gap'], axis=1)'
+df_train = df_train.drop(['gap'], axis=1)
 
+print("ok")
+#idk what this line of code does
+df_all = pd.concat((df_train, df_test), axis=0)
 
 
 ## feature engineering here
-
+## just spam that rdk shit
 
 
 #df_all = df_all.drop(['smiles'], axis=1)
