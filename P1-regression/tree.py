@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
-#from rdkit import Chem
+from rdkit import Chem
 
 print("xd")
 df_train = pd.read_csv("train.csv")
@@ -22,8 +22,17 @@ df_test = df_test.drop(['Id'], axis=1)
 df_train = df_train.drop(['gap'], axis=1)
 
 print("ok")
-#idk what this line of code does
+#merge train and data so we can engineer features
 df_all = pd.concat((df_train, df_test), axis=0)
+
+
+SSSR_len = np.vstack(df_all.smiles.astype(str).apply(lambda x: Chem.GetSSSR(x)))
+print(SSSR_len)
+#df_all['smiles_len'] = pd.DataFrame(smiles_len)
+
+
+#smiles_len = np.vstack(df_all.smiles.astype(str).apply(lambda x: len(x)))
+#df_all['smiles_len'] = pd.DataFrame(smiles_len)
 
 
 ## feature engineering here
@@ -47,3 +56,4 @@ df_all = pd.concat((df_train, df_test), axis=0)
 
 
 #write_to_file("sample2.csv", RF_pred)
+
