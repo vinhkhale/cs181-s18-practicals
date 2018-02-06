@@ -16,6 +16,9 @@ df_test = pd.read_csv("test.csv")
 print("ok")
 
 
+##CONTROL SIZE OF TRAIN
+df_train = df_train[:1000]
+
 #store gap values
 Y_train = df_train.gap.values
 #row where testing examples start
@@ -28,10 +31,10 @@ df_train = df_train.drop(['gap'], axis=1)
 print("ok")
 #merge train and data so we can engineer features
 df_all = pd.concat((df_train, df_test), axis=0)
-#df_all = df_all[:1000] # comment out for full data set
 smiles_len = len(df_all)
 mol_all = [Chem.MolFromSmiles(x) for x in df_all.smiles.astype(str)]
 SSSR_len = np.vstack([Chem.GetSSSR(x) for x in mol_all])
+df_all['SSSR_len'] = pd,DataFrame(SSSR_len)
 print(SSSR_len)
 
 func_group_list = ["[CX4]", "[$([CX2](=C)=C)]", "[$([CX3]=[CX3])]","[CX3]=[OX1]",
@@ -55,12 +58,16 @@ func_group_list = ["[CX4]", "[$([CX2](=C)=C)]", "[$([CX3]=[CX3])]","[CX3]=[OX1]"
 for term in func_group_list:
     smarts = Chem.MolFromSmarts(term)
     rel_count = np.vstack([len(Chem.Mol.GetSubstructMatches(x, smarts, uniquify = True)) for x in mol_all])
-    
     # adds these guys to the data table, len might be broken
     df_all['rel_count_' + term] = pd.DataFrame(rel_count)
 
 morgan = [AllChem.GetMorganFingerprintAsBitVect(x,2,nBits=1024) for x in mol_all]
-print(morgan)
+for i in range(1024):
+    morgVec = np.vstack(morgan[x][i] for x in range(len(mol_all)))
+    df_all['morgVec'+str(i)] = pd.Dataframe(morgVec)
+
+
+
 
 fps = [FingerprintMols.FingerprintMol(x) for x in mol_all]
 maccs = [MACCSkeys.GenMACCSKeys(x) for x in mol_all]
@@ -70,14 +77,14 @@ fps_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, fps_co2) for x in 
 #fps_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, fps_co2, metric=DataStructs.DiceSimilarity) for x in fps])
 #CosineSimilarity, SokalSimilarity, RusselSimilarity, RogotGoldbergSimilarity
 #AllBitSimilarity, KulczynskiSimilarity, McConnaugheySimilarity, AsymmetricSimilarity, BraunBlanquetSimilarity
-print(fps_co2_sim)
+#print(fps_co2_sim)
 maccs_co2 = MACCSkeys.GenMACCSKeys(co2)
 maccs_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, maccs_co2) for x in maccs])
 #maccs_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, maccs_co2, metric=DataStructs.DiceSimilarity) for x in maccs])
 #CosineSimilarity, SokalSimilarity, RusselSimilarity, RogotGoldbergSimilarity
 #AllBitSimilarity, KulczynskiSimilarity, McConnaugheySimilarity, AsymmetricSimilarity, BraunBlanquetSimilarity
-print(maccs_co2_sim)
-print(np.vstack(df_all.smiles.astype(str)))
+#print(maccs_co2_sim)
+#print(np.vstack(df_all.smiles.astype(str)))
 #df_all['smiles_len'] = pd.DataFrame(smiles_len)
 
 
