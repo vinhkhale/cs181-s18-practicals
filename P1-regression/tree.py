@@ -10,14 +10,10 @@ from rdkit.Chem import MACCSkeys
 from rdkit.Chem import AllChem
 
 print("xd")
-df_train = pd.read_csv("train.csv")
+df_train = pd.read_csv("train.csv", nrows=100)
 df_test = pd.read_csv("test.csv")
 
 print("ok")
-
-
-##CONTROL SIZE OF TRAIN
-df_train = df_train[:1000]
 
 #store gap values
 Y_train = df_train.gap.values
@@ -33,8 +29,9 @@ print("ok")
 df_all = pd.concat((df_train, df_test), axis=0)
 smiles_len = len(df_all)
 mol_all = [Chem.MolFromSmiles(x) for x in df_all.smiles.astype(str)]
+print("ok")
 SSSR_len = np.vstack([Chem.GetSSSR(x) for x in mol_all])
-df_all['SSSR_len'] = pd,DataFrame(SSSR_len)
+df_all['SSSR_len'] = pd.DataFrame(SSSR_len)
 print(SSSR_len)
 
 func_group_list = ["[CX4]", "[$([CX2](=C)=C)]", "[$([CX3]=[CX3])]","[CX3]=[OX1]",
@@ -66,20 +63,20 @@ for i in range(1024):
     morgVec = np.vstack(morgan[x][i] for x in range(len(mol_all)))
     df_all['morgVec'+str(i)] = pd.Dataframe(morgVec)
 
+print(def_all)
 
 
-
-fps = [FingerprintMols.FingerprintMol(x) for x in mol_all]
-maccs = [MACCSkeys.GenMACCSKeys(x) for x in mol_all]
-co2 = Chem.MolFromSmiles('C(=O)=O')
-fps_co2 = FingerprintMols.FingerprintMol(co2)
-fps_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, fps_co2) for x in fps])
+#fps = [FingerprintMols.FingerprintMol(x) for x in mol_all]
+#maccs = [MACCSkeys.GenMACCSKeys(x) for x in mol_all]
+#co2 = Chem.MolFromSmiles('C(=O)=O')
+#fps_co2 = FingerprintMols.FingerprintMol(co2)
+#fps_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, fps_co2) for x in fps])
 #fps_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, fps_co2, metric=DataStructs.DiceSimilarity) for x in fps])
 #CosineSimilarity, SokalSimilarity, RusselSimilarity, RogotGoldbergSimilarity
 #AllBitSimilarity, KulczynskiSimilarity, McConnaugheySimilarity, AsymmetricSimilarity, BraunBlanquetSimilarity
 #print(fps_co2_sim)
-maccs_co2 = MACCSkeys.GenMACCSKeys(co2)
-maccs_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, maccs_co2) for x in maccs])
+#maccs_co2 = MACCSkeys.GenMACCSKeys(co2)
+#maccs_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, maccs_co2) for x in maccs])
 #maccs_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, maccs_co2, metric=DataStructs.DiceSimilarity) for x in maccs])
 #CosineSimilarity, SokalSimilarity, RusselSimilarity, RogotGoldbergSimilarity
 #AllBitSimilarity, KulczynskiSimilarity, McConnaugheySimilarity, AsymmetricSimilarity, BraunBlanquetSimilarity
@@ -96,19 +93,19 @@ maccs_co2_sim = np.vstack([DataStructs.FingerprintSimilarity(x, maccs_co2) for x
 ## just spam that rdk shit
 
 
-df_all = df_all.drop(['smiles'], axis=1)
-vals = df_all.values
-X_train = vals[:test_idx]
-X_test = vals[test_idx:]
-RF = RandomForestRegressor()
-RF.fit(X_train, Y_train)
-RF_pred = RF.predict(X_test)
+#df_all = df_all.drop(['smiles'], axis=1)
+#vals = df_all.values
+#X_train = vals[:test_idx]
+#X_test = vals[test_idx:]
+#RF = RandomForestRegressor()
+#RF.fit(X_train, Y_train)
+#RF_pred = RF.predict(X_test)
 
-def write_to_file(filename, predictions):
-    with open(filename, "w") as f:
-        f.write("Id,Prediction\n")
-        for i,p in enumerate(predictions):
-            f.write(str(i+1) + "," + str(p) + "\n")
+#def write_to_file(filename, predictions):
+#    with open(filename, "w") as f:
+#        f.write("Id,Prediction\n")
+#        for i,p in enumerate(predictions):
+#            f.write(str(i+1) + "," + str(p) + "\n")
 
 
-write_to_file("sample2.csv", RF_pred)
+#write_to_file("sample2.csv", RF_pred)
