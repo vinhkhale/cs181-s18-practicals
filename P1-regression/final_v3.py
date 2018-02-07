@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+import gc
+import cPickle as pickle
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 
-df_train = pd.read_csv("train.csv", nrows = 100000)
+df_train = pd.read_csv("train.csv")
 df_test = pd.read_csv("test.csv")
 
 #store gap values
@@ -28,16 +30,25 @@ descriptors = [
     Descriptors.NumHAcceptors,
     Descriptors.fr_halogen
 ]
+
 for descriptor in descriptors:
-	feats = []
-	for smiles in df_all.smiles.astype(str):
-		mol = Chem.MolFromSmiles(smiles)
-		feat = descriptor(x)
-		feats.append(feat)
-		gc.collect()
+    i = 0
+    feats = []
+    for smiles in df_all.smiles.astype(str):
+        mol = Chem.MolFromSmiles(smiles,sanitize=False)
+	Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_FINDRADICALS|Chem.SANITIZE_SETHYBRIDIZATION)
+        feat = descriptor(mol)
+        feats.append(feat)
+        if i % 10000 == 0:
+            gc.collect()
+            print i
+        i += 1
     feats_vstack = np.vstack(feats)
+    with open(str(feat_num) + "-data", "w") as f:
+        pickle.dump(feats_vstack, f, pickle.HIGHEST_PROTOCOL)
     df_all['feat_' + str(feat_num)] = pd.DataFrame(feats_vstack)
     feat_num += 1
+
 
 #Drop the 'smiles' column
 df_all = df_all.drop(['smiles'], axis=1)
