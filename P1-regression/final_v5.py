@@ -9,8 +9,8 @@ from sklearn.ensemble import RandomForestRegressor
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from rdkit.Chem import AllChem
-df_train = pd.read_csv("train.csv", dtype = np.int8)
-df_test = pd.read_csv("test.csv", dtype = np.int8)
+df_train = pd.read_csv("train.csv")
+df_test = pd.read_csv("test.csv")
 
 #store gap values
 Y_train = df_train.gap.values
@@ -28,17 +28,27 @@ print "done reading"
 
 def process_df(df):
     mol_all = df.smiles.astype(str).apply(lambda x: Chem.MolFromSmiles(x, sanitize = False))
-    for mol in mol_all:
+    morgan = np.empty([len(mol_all), 256], dtype=np.int8)
+    for (i, mol) in enumerate(mol_all):
         Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_SYMMRINGS|Chem.SANITIZE_KEKULIZE|Chem.SANITIZE_SETHYBRIDIZATION)
-    morgan = [AllChem.GetMorganFingerprintAsBitVect(x,2,nBits=256) for x in mol_all]
+        morgan[i] = np.array(AllChem.GetMorganFingerprintAsBitVect(mol,2,nBits=256),dtype=np.int8)
+    print "split done"
     return morgan
 
-df_split = np.array_split(df_all, 72)
+# df_all = df_all[:144]
+
+df_split = np.array_split(df_all, 144)
 pool = Pool()
 morgan = pool.map(process_df, df_split)
 pool.close()
 pool.join()
+#morgan = morgan.reshape(len(morgan) * 72, 256)
+print "stacking"
 morgan = np.vstack(morgan)
+print "done"
+#print morgan
+#print len(morgan)
+#exit()
         
 #mol_all = df_all.smiles.astype(str).apply(lambda x: Chem.MolFromSmiles(x, sanitize = False))
 #for mol in mol_all:
@@ -48,7 +58,9 @@ morgan = np.vstack(morgan)
 
 
 # TRISTAN YANG- IF THIS LINE DOESNT WORK THEN USE THE for i in range(2048) guy
-df_all = pd.DataFrame(morgan.T,dtype = np.int8)
+print "converting to dataframe"
+df_all = pd.DataFrame(morgan,dtype=np.int8)
+print "done"
 
 #for i in range(2048):
  #   morgVec = np.vstack(morgan[x][i] for x in range(len(mol_all)))
@@ -74,12 +86,12 @@ df_all = pd.DataFrame(morgan.T,dtype = np.int8)
 print "Done reading feats"
 
 #Drop the 'smiles' column
-df_all = df_all.drop(['smiles'], axis=1)
+#df_all = df_all.drop(['smiles'], axis=1)
 vals = df_all.values
 X_train = vals[:test_idx]
 X_test = vals[test_idx:]
 
-RF = RandomForestRegressor()
+RF = RandomForestRegressor(n_jobs=-1)
 RF.fit(X_train, Y_train)
 RF_pred = RF.predict(X_test)
 
