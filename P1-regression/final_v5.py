@@ -3,6 +3,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import gc
 import cPickle as pickle
+from multiprocessing import Pool
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 from rdkit import Chem
@@ -25,11 +26,25 @@ df_all = pd.concat((df_train, df_test), axis=0)
 
 print "done reading"
 
-mol_all = df_all.smiles.astype(str).apply(lambda x: Chem.MolFromSmiles(x, sanitize = False))
-for mol in mol_all:
-    Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_SYMMRINGS|Chem.SANITIZE_KEKULIZE|Chem.SANITIZE_SETHYBRIDIZATION)
-print("done sanitizing")
-morgan = [AllChem.GetMorganFingerprintAsBitVect(x,2,nBits=256) for x in mol_all]
+def process_df(df):
+    mol_all = df.smiles.astype(str).apply(lambda x: Chem.MolFromSmiles(x, sanitize = False))
+    for mol in mol_all:
+        Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_SYMMRINGS|Chem.SANITIZE_KEKULIZE|Chem.SANITIZE_SETHYBRIDIZATION)
+    morgan = [AllChem.GetMorganFingerprintAsBitVect(x,2,nBits=256) for x in mol_all]
+    return morgan
+
+df_split = np.array_split(df_all, 72)
+pool = Pool()
+morgan = pool.map(process_df, df_split)
+pool.close()
+pool.join()
+morgan = np.vstack(morgan)
+        
+#mol_all = df_all.smiles.astype(str).apply(lambda x: Chem.MolFromSmiles(x, sanitize = False))
+#for mol in mol_all:
+#    Chem.SanitizeMol(mol,sanitizeOps=Chem.SANITIZE_SYMMRINGS|Chem.SANITIZE_KEKULIZE|Chem.SANITIZE_SETHYBRIDIZATION)
+#print("done sanitizing")
+#morgan = [AllChem.GetMorganFingerprintAsBitVect(x,2,nBits=256) for x in mol_all]
 
 
 # TRISTAN YANG- IF THIS LINE DOESNT WORK THEN USE THE for i in range(2048) guy
